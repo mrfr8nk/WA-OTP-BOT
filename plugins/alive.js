@@ -1,5 +1,5 @@
 
-const { cmd } = require("../command");
+const { cmd } = require("../lib/command");
 const moment = require("moment");
 
 let botStartTime = Date.now(); //
