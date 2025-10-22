@@ -1,6 +1,6 @@
 {
-  "name": "QUEEN-NELUMI-MD",
-  "description": "THE BEST WHATSAPP BOT QUEEN-NELUMI-MD",
+  "name": "W.A-BOT",
+  "description": "FREE OTP",
   "logo": "https://i.ibb.co/6RPYc2rF/4681.jpg",
   "keywords": ["bot"],
   
@@ -21,7 +21,7 @@
     "ALIVE_MSG": {
       "description": "paste your alive message hear.",
       "required": true,
-      "value": "I"am Alive Now!! QUEEN NELUMI MD 🤭💗 ආහ් පැටියෝ කොහොමද ?🌝"
+      "value": "I"am Alive Now!!"
     },
     
     "PREFIX": {
