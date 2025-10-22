@@ -21,6 +21,7 @@
     "child_process": "1.0.2",
     "crypto": "latest",
     "express": "latest",
+    "@octokit/rest": "*",
     "file_size_url": "^1.0.6",
     "file-type": "16.5.3",
     "form-data": "^4.0.2",
