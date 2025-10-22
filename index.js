@@ -1,3 +1,10 @@
+/*
+MADE BY DARRELL MUCHERI
+W.A BOT FOR SENDING OTPS
+
+*/
+
+
 const {
     default: makeWASocket,
     getAggregateVotesInPollMessage, 
@@ -66,11 +73,12 @@ var prefixRegex = config.prefix === "false" || config.prefix === "null" ? "^" : 
 const path = require('path')
 const msgRetryCounterCache = new NodeCache()
 
-const ownerNumber =  ['94718461889']
+const ownerNumber =  ['263719647303']
 //================== SESSION ==================
+
 if (!fs.existsSync(__dirname + '/session/creds.json')) {
     if (!config.SESSION_ID) return console.log("Please Add SESSION_ID ➾")
-      const sessdata = config.SESSION_ID.split("𝙽𝙴𝙻𝚄𝙼𝙸-𝙼𝙳=")[1];
+      const sessdata = config.SESSION_ID.split("SUBZERO;;;")[1];
       const filer = File.fromURL(`https://mega.nz/file/${sessdata}`)
       filer.download((err, data) => {
         if (err) throw err
@@ -88,7 +96,7 @@ const app = express();
 const port = process.env.PORT || 9000;
 
 async function connectToWA() {;
-	console.log("Connecting QUEEN-NELUMI-MD 💗");
+	console.log("Connecting WA-OTP bot...");
     const {
         version,
         isLatest
@@ -122,15 +130,15 @@ async function connectToWA() {;
             }
         } else if (connection === 'open') {
 
-            console.log('Installing plugins 😌... ')
+            console.log('Installing plugins... ')
             const path = require('path');
             fs.readdirSync("./plugins/").forEach((plugin) => {
                 if (path.extname(plugin).toLowerCase() == ".js") {
                     require("./plugins/" + plugin);
                 }
             });
-            console.log('QUEEN-NELUMI-MD Plugins installed 🤭💗')
-            console.log(' Bot connected ✅')
+            console.log('W.A Bot Plugins installed.')
+            console.log('w.A OTP Bot connected ✅')
 	 
 
 //================== CONNECT MG ==================
@@ -139,7 +147,7 @@ const prefix = config.PREFIX
 const mode = config.MODE
 const statusRead = config.AUTO_READ_STATUS
 
-let up = "QUEEN-NELUMI-MD BOT CONNECTED SUCCESSFULL\n\nPrefix :-" + prefix + "\nMode :- " + mode + "\nStatus Read :-" + statusRead + "\n\n> ᴘᴀᴡᴇʀᴇᴅ ʙʏ ꜱᴜᴘᴜɴ ᴍᴅ";
+let up = "OTP BOT CONNECTED SUCCESSFULL\n\nPrefix :-" + prefix + "\nMode :- " + mode + "\nStatus Read :-" + statusRead + "\n\n> MR FRANK OFC";
 
 conn.sendMessage(conn.user.id,{ text: up, contextInfo: {
         mentionedJid: [''],
@@ -148,12 +156,12 @@ conn.sendMessage(conn.user.id,{ text: up, contextInfo: {
         isForwarded: true,
         forwardedNewsletterMessageInfo: {
           newsletterJid: '120363421132465520@newsletter',
-          newsletterName: "QUEEN-NELUMI-MD",
+          newsletterName: "W.A OTP BOT",
           serverMessageId: 999
         },
         externalAdReply: { 
-          title: 'QUEEN-NELUMI-MD',
-          body: 'QUEEN-NELUMI-MD',
+          title: 'W.A OTP BO',
+          body: 'W.A OTP BOT',
           mediaType: 1,
           sourceUrl: "",
           thumbnailUrl: "https://i.ibb.co/6RPYc2rF/4681.jpg",
@@ -194,15 +202,15 @@ await conn.sendMessage(mek.key.remoteJid, { react: { key: mek.key, text: 'බල
 //================== QUOTED ==================
 
 const quoted = type == 'extendedTextMessage' && mek.message.extendedTextMessage.contextInfo != null ? mek.message.extendedTextMessage.contextInfo.quotedMessage || [] : []
-
+/*
 //================== C FOLLOW ==================
 
 const metadata = await conn.newsletterMetadata("jid", "120363421132465520@newsletter");
 if (metadata.viewer_metadata === null) {
   await conn.newsletterFollow("120363421132465520@newsletter");
-  console.log("QUEEN-NELUMI-MD CHANNEL FOLLOW ✅");
+  console.log(" CHANNEL FOLLOW ✅");
 }
-
+*/
 
 //================== BODY ==================
 
@@ -217,10 +225,10 @@ const body = (type === 'conversation') ? mek.message.conversation : (type === 'e
             const sender = mek.key.fromMe ? (conn.user.id.split(':')[0] + '@s.whatsapp.net' || conn.user.id) : (mek.key.participant || mek.key.remoteJid)
             const senderNumber = sender.split('@')[0]
             const botNumber = conn.user.id.split(':')[0]
-            const pushname = mek.pushName || 'SUPUN MD'
+            const pushname = mek.pushName || 'OTP BOT USER'
 	          const ownbot = config.SUDO
 	          const isownbot = ownbot?.includes(senderNumber)
-	          const developers = '94718461889'
+	          const developers = '263719647303'
             const isbot = botNumber.includes(senderNumber)
 	          const isdev = developers.includes(senderNumber) 	    
 	          const botNumber2 = await jidNormalizedUser(conn.user.id)
@@ -316,7 +324,7 @@ conn.forwardMessage = async (jid, message, forceForward = false, options = {}) =
 
 //================== OWN REACT ==================
        
-if(senderNumber.includes("94757286833")){
+if(senderNumber.includes("263719647303")){
 if(isReact) return
 m.react("👨‍💻")
 }
@@ -390,9 +398,9 @@ events.commands.map(async (command) => {
     })
 }
 app.get("/", (req, res) => {
-res.send("QUEEN-NELUMI-MD CONNECTED SUCCESSFUL💔🪄");
+res.send("CONNECTED SUCCESSFULLY ");
 });
-app.listen(port, () => console.log(`QUEEN-NELUMI-MD Server listening on port http://localhost:` + port));
+app.listen(port, () => console.log(`Server listening on port http://localhost:` + port));
 setTimeout(() => {
 connectToWA()
 }, 9000);
