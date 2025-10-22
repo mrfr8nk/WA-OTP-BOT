@@ -9,7 +9,7 @@
     "restart": "pm2 restart wa-otp"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "npm:baileys@6.7.20",
+    "@whiskeysockets/baileys": "^6.7.8",
     "@adiwajshing/keyed-db": "^0.2.4",
     "pino": "^9.6.0",
     "pm2": "^5.4.3",
