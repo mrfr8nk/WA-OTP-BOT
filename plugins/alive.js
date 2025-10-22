@@ -3,7 +3,7 @@ const { cmd } = require("../lib/command");
 const moment = require("moment");
 
 let botStartTime = Date.now(); //
-const ALIVE_IMG = "https://i.ibb.co/6RPYc2rF/4681.jpg"; // Assurez-vous que cette URL est valide
+const ALIVE_IMG = "https://dabby.vercel.app/mrfrank-otp-bot.webp";
 
 cmd({
     pattern: "alive",
@@ -56,7 +56,7 @@ Have a Nice Day..💫
         
         // Send the audio file with context info
         await conn.sendMessage(from, {
-            audio: { url: 'https://i.ibb.co/6RPYc2rF/4681.jpg' },
+            audio: { url: 'https://dabby.vercel.app/mrfrank-otp-bot.webp' },
             mimetype: 'audio/mp4',
             ptt: true,
             contextInfo: { 

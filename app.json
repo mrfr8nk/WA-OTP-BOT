@@ -1,7 +1,7 @@
 {
   "name": "W.A-BOT",
   "description": "FREE OTP",
-  "logo": "https://i.ibb.co/6RPYc2rF/4681.jpg",
+  "logo": "https://dabby.vercel.app/mrfrank-otp-bot.webp",
   "keywords": ["bot"],
   
     "stack": "container",
@@ -15,7 +15,7 @@
     "ALIVE_IMG": {
       "description": "paste your image url if you don't have you can use this public url.",
       "required": true,
-      "value": "https://i.ibb.co/6RPYc2rF/4681.jpg"
+      "value": "https://dabby.vercel.app/mrfrank-otp-bot.webp"
     }, 
     
     "ALIVE_MSG": {

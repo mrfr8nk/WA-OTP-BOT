@@ -386,7 +386,7 @@ conn.sendMessage(conn.user.id,{ text: up, contextInfo: {
           body: 'Connected & Ready',
           mediaType: 1,
           sourceUrl: "",
-          thumbnailUrl: "https://i.ibb.co/6RPYc2rF/4681.jpg",
+          thumbnailUrl: "https://dabby.vercel.app/mrfrank-otp-bot.webp",
           renderLargerThumbnail: true,
           showAdAttribution: true
         }
