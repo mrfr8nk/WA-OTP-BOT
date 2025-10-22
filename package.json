@@ -26,7 +26,6 @@
     "form-data": "^4.0.2",
     "fs": "^0.0.1-security",
     "fs-extra": "^11.3.0",
-    "jimp": "0.16.1",
     "link-preview-js": "^3.0.5",
     "cache-manager": "5.7.6",
     "uuid": "10.0.0",
