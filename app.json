@@ -1,0 +1,47 @@
+{
+  "name": "QUEEN-NELUMI-MD",
+  "description": "THE BEST WHATSAPP BOT QUEEN-NELUMI-MD",
+  "logo": "https://i.ibb.co/6RPYc2rF/4681.jpg",
+  "keywords": ["bot"],
+  
+    "stack": "container",
+  "env": {
+    "SESSION_ID": {
+      "description": "Put the session-id here.",
+      "required": true,
+      "value": ""
+    },  
+    
+    "ALIVE_IMG": {
+      "description": "paste your image url if you don't have you can use this public url.",
+      "required": true,
+      "value": "https://i.ibb.co/6RPYc2rF/4681.jpg"
+    }, 
+    
+    "ALIVE_MSG": {
+      "description": "paste your alive message hear.",
+      "required": true,
+      "value": "I"am Alive Now!! QUEEN NELUMI MD 🤭💗 ආහ් පැටියෝ කොහොමද ?🌝"
+    },
+    
+    "PREFIX": {
+      "description": "paste your bot prefix note! Don't apply null prefix.",
+      "required": true,
+      "value": "."
+    },
+    
+    "MODE": {
+      "description": "select your bot work type public-private-inbox-group.",
+      "required": true,
+      "value": "public"
+    }
+
+},
+
+     "buildpacks": [
+        {
+            "url": "https://github.com/heroku/heroku-buildpack-nodejs.git"
+        }
+     ],
+  "stack": "heroku-24"
+}
