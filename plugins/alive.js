@@ -1,13 +1,8 @@
-/*
-DONT REMOVE OWNER BY PAHASARA TECH 
-QUEEN NELUMI MD BAEE LEACK
-*/
-
 
 const { cmd } = require("../command");
 const moment = require("moment");
 
-let botStartTime = Date.now(); // Enregistrement de l'heure de démarrage du bot
+let botStartTime = Date.now(); //
 const ALIVE_IMG = "https://i.ibb.co/6RPYc2rF/4681.jpg"; // Assurez-vous que cette URL est valide
 
 cmd({
@@ -28,13 +23,12 @@ cmd({
         const runtimeHours = Math.floor(runtimeMilliseconds / (1000 * 60 * 60));
 
         const formattedInfo = `
-✨ *QUEEN-NELUMI-MD V1 STATUS* ✨
+✨ *BOT STATUS* ✨
 Hi 🫵🏽 ${pushname}
 🕒 *Time*: ${currentTime}
 📅 *Date*: ${currentDate}
 ⏳ *Uptime*: ${runtimeHours} hours, ${runtimeMinutes} minutes, ${runtimeSeconds} seconds
 
-ආහ් පැටියෝ 🤭💗
 
 Have a Nice Day..💫
         `.trim();
@@ -54,7 +48,7 @@ Have a Nice Day..💫
                 isForwarded: true,
                 forwardedNewsletterMessageInfo: {
                     newsletterJid: '120363421132465520@newsletter',
-                    newsletterName: '𝐐𝐔𝐄𝐄𝐍 𝐍𝐄𝐋𝐔𝐌𝐈 𝐌𝐃 💗',
+                    newsletterName: 'W.A OTP BOT',
                     serverMessageId: 143
                 }
             }
@@ -71,7 +65,7 @@ Have a Nice Day..💫
                 isForwarded: true,
                 forwardedNewsletterMessageInfo: {
                     newsletterJid: '120363421132465520@newsletter',
-                    newsletterName: '𝐐𝐔𝐄𝐄𝐍 𝐍𝐄𝐋𝐔𝐌𝐈 𝐌𝐃💛',
+                    newsletterName: 'W.A OTP BOT',
                     serverMessageId: 143
                 }
             }
