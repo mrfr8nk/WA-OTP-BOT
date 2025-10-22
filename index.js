@@ -77,7 +77,9 @@ const ownerNumber =  ['263719647303']
 //================== SESSION ==================
 
 if (!fs.existsSync(__dirname + '/session/creds.json')) {
-    if (!config.SESSION_ID) return console.log("Please Add SESSION_ID ➾")
+    if (!config.SESSION_ID || config.SESSION_ID === 'put your session_id') {
+      console.log("⚠️  No SESSION_ID configured. Bot will generate QR code for first-time setup.")
+    } else if (config.SESSION_ID.includes("SUBZERO;;;")) {
       const sessdata = config.SESSION_ID.split("SUBZERO;;;")[1];
       const filer = File.fromURL(`https://mega.nz/file/${sessdata}`)
       filer.download((err, data) => {
@@ -86,17 +88,17 @@ if (!fs.existsSync(__dirname + '/session/creds.json')) {
           console.log("Session download completed !!")
         })
       })
-    
+    }
   }
 
 //==================  PORTS ==================
 
 const express = require("express");
 const app = express();
-const port = process.env.PORT || 9000;
+const port = process.env.PORT || 5000;
 
 async function connectToWA() {;
-	console.log("Connecting WA-OTP bot...");
+        console.log("Connecting WA-OTP bot...");
     const {
         version,
         isLatest
@@ -139,7 +141,7 @@ async function connectToWA() {;
             });
             console.log('W.A Bot Plugins installed.')
             console.log('w.A OTP Bot connected ✅')
-	 
+         
 
 //================== CONNECT MG ==================
 
@@ -185,16 +187,16 @@ conn.ev.on('creds.update', saveCreds)
 
 //================== AUTO STATUS VIEW ==================
 
-if (!mek.message) return	
+if (!mek.message) return        
 mek.message = (getContentType(mek.message) === 'ephemeralMessage') ? mek.message.ephemeralMessage.message : mek.message
 if (mek.key && mek.key.remoteJid === 'status@broadcast' && config.AUTO_READ_STATUS === "true"){
 await conn.readMessages([mek.key])  
 const mnyako = await jidNormalizedUser(conn.user.id)
 await conn.sendMessage(mek.key.remoteJid, { react: { key: mek.key, text: 'බලලම එපා වෙනෝ 🤧'}}, { statusJidList: [mek.key.participant, mnyako] })
-}	      
-	    if (mek.key && mek.key.remoteJid === 'status@broadcast') return
+}             
+            if (mek.key && mek.key.remoteJid === 'status@broadcast') return
             const m = sms(conn, mek)
-	          var smg = m
+                  var smg = m
             const type = getContentType(mek.message)
             const content = JSON.stringify(mek.message)
             const from = mek.key.remoteJid
@@ -217,7 +219,7 @@ if (metadata.viewer_metadata === null) {
 const body = (type === 'conversation') ? mek.message.conversation : (type === 'extendedTextMessage') ? mek.message.extendedTextMessage.text :(type == 'interactiveResponseMessage' ) ? mek.message.interactiveResponseMessage  && mek.message.interactiveResponseMessage.nativeFlowResponseMessage && JSON.parse(mek.message.interactiveResponseMessage.nativeFlowResponseMessage.paramsJson) && JSON.parse(mek.message.interactiveResponseMessage.nativeFlowResponseMessage.paramsJson).id :(type == 'templateButtonReplyMessage' )? mek.message.templateButtonReplyMessage && mek.message.templateButtonReplyMessage.selectedId  : (type === 'extendedTextMessage') ? mek.message.extendedTextMessage.text : (type == 'imageMessage') && mek.message.imageMessage.caption ? mek.message.imageMessage.caption : (type == 'videoMessage') && mek.message.videoMessage.caption ? mek.message.videoMessage.caption : ''
       
 
-	          const isCmd = body.startsWith(prefix)	    
+                  const isCmd = body.startsWith(prefix)     
             const command = isCmd ? body.slice(prefix.length).trim().split(' ').shift().toLowerCase() : ''
             const args = body.trim().split(/ +/).slice(1)
             const q = args.join(' ')
@@ -226,14 +228,14 @@ const body = (type === 'conversation') ? mek.message.conversation : (type === 'e
             const senderNumber = sender.split('@')[0]
             const botNumber = conn.user.id.split(':')[0]
             const pushname = mek.pushName || 'OTP BOT USER'
-	          const ownbot = config.SUDO
-	          const isownbot = ownbot?.includes(senderNumber)
-	          const developers = '263719647303'
+                  const ownbot = config.SUDO
+                  const isownbot = ownbot?.includes(senderNumber)
+                  const developers = '263719647303'
             const isbot = botNumber.includes(senderNumber)
-	          const isdev = developers.includes(senderNumber) 	    
-	          const botNumber2 = await jidNormalizedUser(conn.user.id)
-            const isCreator = [ botNumber2 ].map((v) => v.replace(/[^0-9]/g, "") + "@s.whatsapp.net").includes(sender)	  
-	          const isMe = isbot ? isbot : isdev
+                  const isdev = developers.includes(senderNumber)           
+                  const botNumber2 = await jidNormalizedUser(conn.user.id)
+            const isCreator = [ botNumber2 ].map((v) => v.replace(/[^0-9]/g, "") + "@s.whatsapp.net").includes(sender)    
+                  const isMe = isbot ? isbot : isdev
             const isOwner = ownerNumber.includes(senderNumber) || isMe
             const groupMetadata = isGroup ? await conn.groupMetadata(from).catch(e => {}) : ''
             const groupName = isGroup ? groupMetadata.subject : ''
@@ -243,7 +245,7 @@ const body = (type === 'conversation') ? mek.message.conversation : (type === 'e
             const isAdmins = isGroup ? groupAdmins.includes(sender) : false
             const isreaction = m.message.reactionMessage ? true : false
             const isReact =m.message.reactionMessage ? true : false
-	    const isAnti = (teks) => {
+            const isAnti = (teks) => {
                 let getdata = teks
                 for (let i = 0; i < getdata.length; i++) {
                     if (getdata[i] === from) return true
@@ -377,7 +379,7 @@ events.commands.map(async (command) => {
         reply(from)
         break
         
-        default:				
+        default:                                
         if (isOwner && body.startsWith('$')) {
         let bodyy = body.split('$')[1]
         let code2 = bodyy.replace("°", ".toString()");
@@ -400,7 +402,7 @@ events.commands.map(async (command) => {
 app.get("/", (req, res) => {
 res.send("CONNECTED SUCCESSFULLY ");
 });
-app.listen(port, () => console.log(`Server listening on port http://localhost:` + port));
+app.listen(port, '0.0.0.0', () => console.log(`Server listening on port http://0.0.0.0:` + port));
 setTimeout(() => {
 connectToWA()
 }, 9000);
