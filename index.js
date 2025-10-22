@@ -77,6 +77,12 @@ const msgRetryCounterCache = new NodeCache()
 const ownerNumber =  ['263719647303']
 //================== SESSION ==================
 
+// Ensure session directory exists
+if (!fs.existsSync(__dirname + '/session')) {
+    fs.mkdirSync(__dirname + '/session', { recursive: true });
+    console.log("📁 Created session directory");
+}
+
 if (!fs.existsSync(__dirname + '/session/creds.json')) {
     if (!config.SESSION_ID || config.SESSION_ID === 'put your session_id') {
       console.log("⚠️  No SESSION_ID configured. Bot will generate QR code for first-time setup.")
@@ -92,9 +98,8 @@ if (!fs.existsSync(__dirname + '/session/creds.json')) {
               console.error("❌ Failed to download session from MEGA:", err.message)
               console.log("Bot will generate QR code for first-time setup.")
             } else {
-              fs.writeFile(__dirname + '/session/creds.json', data, () => {
-                console.log("✅ Session download completed !!")
-              })
+              fs.writeFileSync(__dirname + '/session/creds.json', data);
+              console.log("✅ Session downloaded and saved successfully!");
             }
           })
         }
@@ -105,6 +110,8 @@ if (!fs.existsSync(__dirname + '/session/creds.json')) {
     } else {
       console.log("⚠️  SESSION_ID format not recognized. Bot will generate QR code for first-time setup.")
     }
+  } else {
+    console.log("✅ Existing session found, attempting to use saved credentials");
   }
 
 //==================  PORTS ==================
@@ -115,18 +122,23 @@ const port = process.env.PORT || 5000;
 
 setupOTPRoutes(app);
 
-async function connectToWA() {;
-        console.log("Connecting WA-OTP bot...");
-    const {
-        version,
-        isLatest
-    } = await fetchLatestBaileysVersion()
-    console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`)
-    const {
-        state,
-        saveCreds
-    } = await useMultiFileAuthState(__dirname + '/session/')
-    const conn = makeWASocket({
+async function connectToWA() {
+    try {
+        console.log("🔄 Connecting WA-OTP bot...");
+        const {
+            version,
+            isLatest
+        } = await fetchLatestBaileysVersion()
+        console.log(`📱 Using WA v${version.join('.')}, isLatest: ${isLatest}`)
+        
+        const {
+            state,
+            saveCreds
+        } = await useMultiFileAuthState(__dirname + '/session/')
+        
+        console.log("📂 Session state loaded");
+        
+        const conn = makeWASocket({
         logger: P({
             level: "fatal"
         }).child({
@@ -151,8 +163,25 @@ async function connectToWA() {;
         }
         
         if (connection === 'close') {
-            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-            console.log('Connection closed due to:', lastDisconnect?.error?.message || 'Unknown error');
+            const statusCode = lastDisconnect?.error?.output?.statusCode;
+            const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+            
+            console.log('Connection closed. Status code:', statusCode);
+            console.log('Reason:', lastDisconnect?.error?.message || 'Unknown error');
+            
+            if (statusCode === DisconnectReason.loggedOut) {
+                console.log('⚠️  Device logged out. Deleting session files...');
+                try {
+                    if (fs.existsSync(__dirname + '/session/creds.json')) {
+                        fs.unlinkSync(__dirname + '/session/creds.json');
+                    }
+                    console.log('Session cleared. Please restart the bot and scan QR code again.');
+                } catch (err) {
+                    console.error('Error deleting session:', err);
+                }
+                return;
+            }
+            
             if (shouldReconnect) {
                 console.log('Reconnecting in 5 seconds...');
                 setTimeout(() => connectToWA(), 5000);
@@ -426,9 +455,14 @@ events.commands.map(async (command) => {
             console.log(isError)
         }
     })
+    } catch (error) {
+        console.error('❌ Fatal error in connectToWA:', error);
+        console.log('Retrying connection in 10 seconds...');
+        setTimeout(() => connectToWA(), 10000);
+    }
 }
 app.listen(port, '0.0.0.0', () => console.log(`Server listening on port http://0.0.0.0:` + port));
 setTimeout(() => {
 connectToWA()
-}, 9000);
+}, 3000);
     
