@@ -53,6 +53,7 @@ const { tmpdir } = require('os')
 const Crypto = require('crypto')
 
 const Jimp = require('jimp')
+const { setupOTPRoutes, setWAConnection } = require('./lib/otpRoutes')
 
 var prefix = config.PREFIX
 var prefixRegex = config.prefix === "false" || config.prefix === "null" ? "^" : new RegExp('^[' + config.PREFIX + ']');
@@ -112,6 +113,8 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 5000;
 
+setupOTPRoutes(app);
+
 async function connectToWA() {;
         console.log("Connecting WA-OTP bot...");
     const {
@@ -129,7 +132,6 @@ async function connectToWA() {;
         }).child({
             level: "fatal"
         }),
-        printQRInTerminal: true,
         generateHighQualityLinkPreview: true,
         auth: state,
         defaultQueryTimeoutMs: undefined,
@@ -139,11 +141,21 @@ async function connectToWA() {;
     conn.ev.on('connection.update', async (update) => {
         const {
             connection,
-            lastDisconnect
+            lastDisconnect,
+            qr
         } = update
+        
+        if (qr) {
+            console.log('\n📱 Scan this QR code with WhatsApp:');
+            qrcode.generate(qr, { small: true });
+        }
+        
         if (connection === 'close') {
-            if (lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut) {
-                connectToWA()
+            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+            console.log('Connection closed due to:', lastDisconnect?.error?.message || 'Unknown error');
+            if (shouldReconnect) {
+                console.log('Reconnecting in 5 seconds...');
+                setTimeout(() => connectToWA(), 5000);
             }
         } else if (connection === 'open') {
 
@@ -156,7 +168,8 @@ async function connectToWA() {;
             });
             console.log('W.A Bot Plugins installed.')
             console.log('w.A OTP Bot connected ✅')
-         
+            
+            setWAConnection(conn);
 
 //================== CONNECT MG ==================
 
@@ -414,9 +427,6 @@ events.commands.map(async (command) => {
         }
     })
 }
-app.get("/", (req, res) => {
-res.send("CONNECTED SUCCESSFULLY ");
-});
 app.listen(port, '0.0.0.0', () => console.log(`Server listening on port http://0.0.0.0:` + port));
 setTimeout(() => {
 connectToWA()
