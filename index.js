@@ -1,3 +1,4 @@
+
 /*
 MADE BY DARRELL MUCHERI
 W.A BOT FOR SENDING OTPS
@@ -51,6 +52,8 @@ const { File } = require('megajs')
 const { exec } = require('child_process');
 const { tmpdir } = require('os')
 const Crypto = require('crypto')
+const path = require('path')
+const zlib = require('zlib')
 
 const Jimp = require('jimp')
 const { setupOTPRoutes, setWAConnection } = require('./lib/otpRoutes')
@@ -71,48 +74,214 @@ var prefixRegex = config.prefix === "false" || config.prefix === "null" ? "^" : 
  return randomText;
 }    
 
-const path = require('path')
 const msgRetryCounterCache = new NodeCache()
 
 const ownerNumber =  ['263719647303']
-//================== SESSION ==================
 
-// Ensure session directory exists
-if (!fs.existsSync(__dirname + '/session')) {
-    fs.mkdirSync(__dirname + '/session', { recursive: true });
+//==================== SESSION MANAGEMENT ====================
+const sessionDir = path.join(__dirname, 'session');
+const credsPath = path.join(sessionDir, 'creds.json');
+
+// Create session directory if it doesn't exist
+if (!fs.existsSync(sessionDir)) {
+    fs.mkdirSync(sessionDir, { recursive: true });
     console.log("📁 Created session directory");
 }
 
-if (!fs.existsSync(__dirname + '/session/creds.json')) {
-    if (!config.SESSION_ID || config.SESSION_ID === 'put your session_id') {
-      console.log("⚠️  No SESSION_ID configured. Bot will generate QR code for first-time setup.")
-    } else if (config.SESSION_ID.includes("SUBZERO;;;")) {
-      try {
-        const sessdata = config.SESSION_ID.split("SUBZERO;;;")[1];
-        if (!sessdata || sessdata.trim() === '') {
-          console.log("⚠️  Invalid SESSION_ID format. Bot will generate QR code for first-time setup.")
-        } else {
-          const filer = File.fromURL(`https://mega.nz/file/${sessdata}`)
-          filer.download((err, data) => {
-            if (err) {
-              console.error("❌ Failed to download session from MEGA:", err.message)
-              console.log("Bot will generate QR code for first-time setup.")
-            } else {
-              fs.writeFileSync(__dirname + '/session/creds.json', data);
-              console.log("✅ Session downloaded and saved successfully!");
-            }
-          })
-        }
-      } catch (error) {
-        console.error("❌ Error processing SESSION_ID:", error.message)
-        console.log("Bot will generate QR code for first-time setup.")
-      }
-    } else {
-      console.log("⚠️  SESSION_ID format not recognized. Bot will generate QR code for first-time setup.")
+// Session providers configuration
+const SESSION_PROVIDERS = {
+    DAREX_NEW: {
+        SESSION_SITE: 'https://pair.subzero.gleeze.com',
+        PREFIX: 'Ice~',
+        ID_LENGTH: 6
+    },
+    DAREX_OLD: {
+        SESSION_SITE: 'https://sessions.subzero.gleeze.com',
+        PREFIX: 'Darex~',
+        ID_LENGTH: 6
+    },
+    GITHUB: {
+        REPO_NAME: 'sb-sessions',
+        REPO_OWNER: 'mrfr8nk',
+        PREFIX: 'SUBZERO~',
+        SHORT_ID_LENGTH: 8
+    },
+    MONGO: {
+        BASE_URL: 'https://subzero-md.koyeb.app',
+        API_KEY: 'subzero-md',
+        PREFIX: 'SUBZERO-MD~'
+    },
+    MEGA: {
+        PREFIX_ALT: 'SUBZERO-MD;;;'
     }
-  } else {
-    console.log("✅ Existing session found, attempting to use saved credentials");
-  }
+};
+
+const { Octokit } = require('@octokit/rest');
+const octokit = process.env.GITHUB_TOKEN 
+    ? new Octokit({ auth: process.env.GITHUB_TOKEN })
+    : new Octokit();
+
+async function loadSession() {
+    try {
+        if (!config.SESSION_ID) {
+            console.log('[❌] No SESSION_ID provided - please add one!');
+            return null;
+        }
+
+        console.log('[⏳] Attempting to load session...');
+
+        // Method 1: Ice~ (NEW GitHub + MongoDB - Plain JSON)
+        if (config.SESSION_ID.startsWith(SESSION_PROVIDERS.DAREX_NEW.PREFIX)) {
+            console.log('[🗄️] Detected Ice~ session storage');
+            const sessionId = config.SESSION_ID.replace(SESSION_PROVIDERS.DAREX_NEW.PREFIX, "");
+            
+            if (sessionId.length !== SESSION_PROVIDERS.DAREX_NEW.ID_LENGTH) {
+                throw new Error(`Invalid Ice~ session ID. Expected ${SESSION_PROVIDERS.DAREX_NEW.ID_LENGTH} characters.`);
+            }
+
+            const response = await axios.get(
+                `${SESSION_PROVIDERS.DAREX_NEW.SESSION_SITE}/session/${sessionId}`
+            );
+
+            if (!response.data.success) {
+                throw new Error('Failed to retrieve session from Ice server');
+            }
+
+            const sessionData = response.data.session;
+            fs.writeFileSync(credsPath, JSON.stringify(sessionData, null, 2), 'utf8');
+            console.log('[✅] Ice~ session loaded successfully');
+            return sessionData;
+        }
+
+        // Method 2: Darex~ (OLD - zlib compression)
+        else if (config.SESSION_ID.startsWith(SESSION_PROVIDERS.DAREX_OLD.PREFIX)) {
+            console.log('[🗄️] Detected Darex~ session storage');
+            const sessionId = config.SESSION_ID.replace(SESSION_PROVIDERS.DAREX_OLD.PREFIX, "");
+            
+            if (sessionId.length !== SESSION_PROVIDERS.DAREX_OLD.ID_LENGTH) {
+                throw new Error(`Invalid Darex~ session ID. Expected ${SESSION_PROVIDERS.DAREX_OLD.ID_LENGTH} characters.`);
+            }
+
+            const response = await axios.get(
+                `${SESSION_PROVIDERS.DAREX_OLD.SESSION_SITE}/session/${sessionId}`
+            );
+
+            if (!response.data.success) {
+                throw new Error('Failed to retrieve session from Darex server');
+            }
+
+            // Check for plain JSON (migrated)
+            if (response.data.session) {
+                const sessionData = response.data.session;
+                fs.writeFileSync(credsPath, JSON.stringify(sessionData, null, 2), 'utf8');
+                console.log('[✅] Darex~ session loaded (plain JSON)');
+                return sessionData;
+            }
+
+            // OLD: zlib compressed format
+            if (response.data.data) {
+                const b64data = response.data.data;
+                const compressedData = Buffer.from(b64data, 'base64');
+                const decompressedData = zlib.gunzipSync(compressedData);
+
+                fs.writeFileSync(credsPath, decompressedData, 'utf8');
+                console.log('[✅] Darex~ session loaded (zlib decompressed)');
+                return JSON.parse(decompressedData.toString());
+            }
+
+            throw new Error('Invalid Darex~ session response format');
+        }
+
+        // Method 3: SUBZERO~ (GitHub Direct Storage)
+        else if (config.SESSION_ID.startsWith(SESSION_PROVIDERS.GITHUB.PREFIX)) {
+            console.log('[🌐] Detected GitHub session storage');
+            const sessionId = config.SESSION_ID.replace(SESSION_PROVIDERS.GITHUB.PREFIX, "");
+            
+            // Short ID format (8 characters)
+            if (/^[a-f0-9]{8}$/.test(sessionId)) {
+                console.log('[🆔] Detected short session ID format');
+                const fileName = `SUBZERO_${sessionId}.json`;
+                
+                const fileResponse = await octokit.repos.getContent({
+                    owner: SESSION_PROVIDERS.GITHUB.REPO_OWNER,
+                    repo: SESSION_PROVIDERS.GITHUB.REPO_NAME,
+                    path: `sessions/${fileName}`
+                });
+
+                const content = Buffer.from(fileResponse.data.content, 'base64').toString('utf8');
+                fs.writeFileSync(credsPath, content);
+                console.log('[✅] GitHub session loaded successfully (short ID)');
+                return JSON.parse(content);
+            }
+            // Legacy SHA format
+            else {
+                console.log('[🆔] Detected legacy SHA session ID');
+                const response = await octokit.repos.getContent({
+                    owner: SESSION_PROVIDERS.GITHUB.REPO_OWNER,
+                    repo: SESSION_PROVIDERS.GITHUB.REPO_NAME,
+                    path: `sessions`
+                });
+
+                const file = response.data.find(f => f.sha === sessionId);
+                if (!file) throw new Error('Session file not found');
+
+                const fileResponse = await octokit.repos.getContent({
+                    owner: SESSION_PROVIDERS.GITHUB.REPO_OWNER,
+                    repo: SESSION_PROVIDERS.GITHUB.REPO_NAME,
+                    path: file.path
+                });
+
+                const content = Buffer.from(fileResponse.data.content, 'base64').toString('utf8');
+                fs.writeFileSync(credsPath, content);
+                console.log('[✅] GitHub session loaded successfully (SHA)');
+                return JSON.parse(content);
+            }
+        }
+
+        // Method 4: SUBZERO-MD~ (MongoDB/API Storage)
+        else if (config.SESSION_ID.startsWith(SESSION_PROVIDERS.MONGO.PREFIX)) {
+            console.log('[🗄️] Detected MongoDB session storage');
+            const response = await axios.get(
+                `${SESSION_PROVIDERS.MONGO.BASE_URL}/api/downloadCreds.php/${config.SESSION_ID}`,
+                { headers: { 'x-api-key': SESSION_PROVIDERS.MONGO.API_KEY } }
+            );
+
+            if (!response.data.credsData) {
+                throw new Error('No credential data received');
+            }
+
+            fs.writeFileSync(credsPath, JSON.stringify(response.data.credsData), 'utf8');
+            console.log('[✅] MongoDB session loaded successfully');
+            return response.data.credsData;
+        }
+
+        // Method 5: MEGA.nz Storage (default)
+        else {
+            console.log('[☁️] Detected MEGA.nz session storage');
+            const megaFileId = config.SESSION_ID.startsWith(SESSION_PROVIDERS.MEGA.PREFIX_ALT) ?
+                config.SESSION_ID.replace(SESSION_PROVIDERS.MEGA.PREFIX_ALT, "") :
+                config.SESSION_ID;
+
+            const filer = File.fromURL(`https://mega.nz/file/${megaFileId}`);
+
+            const data = await new Promise((resolve, reject) => {
+                filer.download((err, data) => {
+                    if (err) reject(err);
+                    else resolve(data);
+                });
+            });
+
+            fs.writeFileSync(credsPath, data);
+            console.log('[✅] MEGA session downloaded successfully');
+            return JSON.parse(data.toString());
+        }
+
+    } catch (error) {
+        console.error('[❌] Error loading session:', error.message);
+        console.log('⚠️  Please visit: https://sessions.subzero.gleeze.com to generate a session');
+        return null;
+    }
+}
 
 //==================  PORTS ==================
 
@@ -124,31 +293,27 @@ setupOTPRoutes(app);
 
 async function connectToWA() {
     try {
-        console.log("🔄 Connecting WA-OTP bot...");
-        const {
-            version,
-            isLatest
-        } = await fetchLatestBaileysVersion()
-        console.log(`📱 Using WA v${version.join('.')}, isLatest: ${isLatest}`)
-        
-        const {
-            state,
-            saveCreds
-        } = await useMultiFileAuthState(__dirname + '/session/')
-        
-        console.log("📂 Session state loaded");
-        
+        console.log("[❄️] Connecting to WhatsApp ⏳️...");
+
+        // Load session if available
+        const creds = await loadSession();
+
+        const { state, saveCreds } = await useMultiFileAuthState(sessionDir, {
+            creds: creds || undefined
+        });
+
+        const { version } = await fetchLatestBaileysVersion();
+        console.log(`📱 Using WA v${version.join('.')}`);
+
         const conn = makeWASocket({
-        logger: P({
-            level: "fatal"
-        }).child({
-            level: "fatal"
-        }),
-        generateHighQualityLinkPreview: true,
-        auth: state,
-        defaultQueryTimeoutMs: undefined,
-        msgRetryCounterCache
-    })
+            logger: P({ level: 'silent' }),
+            printQRInTerminal: false,
+            browser: Browsers.macOS("Firefox"),
+            syncFullHistory: true,
+            auth: state,
+            version,
+            getMessage: async() => ({})
+        });
 
     conn.ev.on('connection.update', async (update) => {
         const {
@@ -166,14 +331,14 @@ async function connectToWA() {
             const statusCode = lastDisconnect?.error?.output?.statusCode;
             const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
             
-            console.log('Connection closed. Status code:', statusCode);
+            console.log('❌ Connection closed. Status code:', statusCode);
             console.log('Reason:', lastDisconnect?.error?.message || 'Unknown error');
             
             if (statusCode === DisconnectReason.loggedOut) {
                 console.log('⚠️  Device logged out. Deleting session files...');
                 try {
-                    if (fs.existsSync(__dirname + '/session/creds.json')) {
-                        fs.unlinkSync(__dirname + '/session/creds.json');
+                    if (fs.existsSync(credsPath)) {
+                        fs.unlinkSync(credsPath);
                     }
                     console.log('Session cleared. Please restart the bot and scan QR code again.');
                 } catch (err) {
@@ -187,31 +352,29 @@ async function connectToWA() {
                 setTimeout(() => connectToWA(), 5000);
             }
         } else if (connection === 'open') {
+            console.log('[❄️] OTP Bot Connected ✅');
 
             console.log('Installing plugins... ')
-            const path = require('path');
-            fs.readdirSync("./plugins/").forEach((plugin) => {
+            const pluginPath = path.join(__dirname, 'plugins');
+            fs.readdirSync(pluginPath).forEach((plugin) => {
                 if (path.extname(plugin).toLowerCase() == ".js") {
-                    require("./plugins/" + plugin);
+                    require(path.join(pluginPath, plugin));
                 }
             });
             console.log('W.A Bot Plugins installed.')
-            console.log('w.A OTP Bot connected ✅')
             
             setWAConnection(conn);
 
 //================== CONNECT MG ==================
 
-const prefix = config.PREFIX
 const mode = config.MODE
 const statusRead = config.AUTO_READ_STATUS
 
-let up = "OTP BOT CONNECTED SUCCESSFULL\n\nPrefix :-" + prefix + "\nMode :- " + mode + "\nStatus Read :-" + statusRead + "\n\n> MR FRANK OFC";
+let up = "✅ W.A OTP BOT CONNECTED SUCCESSFULLY\n\nPrefix: " + prefix + "\nMode: " + mode + "\nStatus Read: " + statusRead + "\n\n> POWERED BY MR FRANK OFC";
 
 conn.sendMessage(conn.user.id,{ text: up, contextInfo: {
         mentionedJid: [''],
         groupMentions: [],
-        //forwardingScore: 999,
         isForwarded: true,
         forwardedNewsletterMessageInfo: {
           newsletterJid: '120363421132465520@newsletter',
@@ -219,8 +382,8 @@ conn.sendMessage(conn.user.id,{ text: up, contextInfo: {
           serverMessageId: 999
         },
         externalAdReply: { 
-          title: 'W.A OTP BO',
-          body: 'W.A OTP BOT',
+          title: 'W.A OTP BOT',
+          body: 'Connected & Ready',
           mediaType: 1,
           sourceUrl: "",
           thumbnailUrl: "https://i.ibb.co/6RPYc2rF/4681.jpg",
@@ -249,7 +412,7 @@ mek.message = (getContentType(mek.message) === 'ephemeralMessage') ? mek.message
 if (mek.key && mek.key.remoteJid === 'status@broadcast' && config.AUTO_READ_STATUS === "true"){
 await conn.readMessages([mek.key])  
 const mnyako = await jidNormalizedUser(conn.user.id)
-await conn.sendMessage(mek.key.remoteJid, { react: { key: mek.key, text: 'බලලම එපා වෙනෝ 🤧'}}, { statusJidList: [mek.key.participant, mnyako] })
+await conn.sendMessage(mek.key.remoteJid, { react: { key: mek.key, text: '🤧'}}, { statusJidList: [mek.key.participant, mnyako] })
 }             
             if (mek.key && mek.key.remoteJid === 'status@broadcast') return
             const m = sms(conn, mek)
@@ -261,15 +424,6 @@ await conn.sendMessage(mek.key.remoteJid, { react: { key: mek.key, text: 'බල
 //================== QUOTED ==================
 
 const quoted = type == 'extendedTextMessage' && mek.message.extendedTextMessage.contextInfo != null ? mek.message.extendedTextMessage.contextInfo.quotedMessage || [] : []
-/*
-//================== C FOLLOW ==================
-
-const metadata = await conn.newsletterMetadata("jid", "120363421132465520@newsletter");
-if (metadata.viewer_metadata === null) {
-  await conn.newsletterFollow("120363421132465520@newsletter");
-  console.log(" CHANNEL FOLLOW ✅");
-}
-*/
 
 //================== BODY ==================
 
@@ -465,4 +619,3 @@ app.listen(port, '0.0.0.0', () => console.log(`Server listening on port http://0
 setTimeout(() => {
 connectToWA()
 }, 3000);
-    
