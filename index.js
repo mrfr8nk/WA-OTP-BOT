@@ -80,14 +80,29 @@ if (!fs.existsSync(__dirname + '/session/creds.json')) {
     if (!config.SESSION_ID || config.SESSION_ID === 'put your session_id') {
       console.log("⚠️  No SESSION_ID configured. Bot will generate QR code for first-time setup.")
     } else if (config.SESSION_ID.includes("SUBZERO;;;")) {
-      const sessdata = config.SESSION_ID.split("SUBZERO;;;")[1];
-      const filer = File.fromURL(`https://mega.nz/file/${sessdata}`)
-      filer.download((err, data) => {
-        if (err) throw err
-        fs.writeFile(__dirname + '/session/creds.json', data, () => {
-          console.log("Session download completed !!")
-        })
-      })
+      try {
+        const sessdata = config.SESSION_ID.split("SUBZERO;;;")[1];
+        if (!sessdata || sessdata.trim() === '') {
+          console.log("⚠️  Invalid SESSION_ID format. Bot will generate QR code for first-time setup.")
+        } else {
+          const filer = File.fromURL(`https://mega.nz/file/${sessdata}`)
+          filer.download((err, data) => {
+            if (err) {
+              console.error("❌ Failed to download session from MEGA:", err.message)
+              console.log("Bot will generate QR code for first-time setup.")
+            } else {
+              fs.writeFile(__dirname + '/session/creds.json', data, () => {
+                console.log("✅ Session download completed !!")
+              })
+            }
+          })
+        }
+      } catch (error) {
+        console.error("❌ Error processing SESSION_ID:", error.message)
+        console.log("Bot will generate QR code for first-time setup.")
+      }
+    } else {
+      console.log("⚠️  SESSION_ID format not recognized. Bot will generate QR code for first-time setup.")
     }
   }
 
