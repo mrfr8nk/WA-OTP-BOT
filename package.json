@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@adiwajshing/keyed-db": "^0.2.4",
-    "@whiskeysockets/baileys": "npm:angularsockets",
+    "@whiskeysockets/baileys": "npm:@yaoii-bails/baileys",
     "api-dylux": "1.8.5",
     "async-lock": "^1.4.1",
     "awesome-phonenumber": "6.2.0",
