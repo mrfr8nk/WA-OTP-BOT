@@ -26,6 +26,7 @@
     "file_size_url": "^1.0.6",
     "file-type": "16.5.3",
     "form-data": "^4.0.2",
+    "jimp": "*",
     "fs": "^0.0.1-security",
     "fs-extra": "^11.3.0",
     "link-preview-js": "^3.0.5",
