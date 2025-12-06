@@ -3,7 +3,7 @@ const { cmd } = require("../lib/command");
 const moment = require("moment");
 
 let botStartTime = Date.now(); //
-const ALIVE_IMG = "https://dabby.vercel.app/mrfrank-otp-bot.webp";
+const ALIVE_IMG = "https://dar3x.vercel.app/otp-sms.png";
 
 cmd({
     pattern: "alive",
@@ -13,7 +13,7 @@ cmd({
     filename: __filename
 }, async (conn, mek, m, { reply, from }) => {
     try {
-        const pushname = m.pushName || "User"; // Nom de l'utilisateur ou valeur par défaut
+        const pushname = m.pushName || "User"; // Sometimes due to @lid feat user cant be shown so choose baileys wisely
         const currentTime = moment().format("HH:mm:ss");
         const currentDate = moment().format("dddd, MMMM Do YYYY");
 
@@ -33,7 +33,7 @@ Hi 🫵🏽 ${pushname}
 Have a Nice Day..💫
         `.trim();
 
-        // Vérifier si l'image est définie
+        // check if image url works 402 is common issue as i lack money to bill vercel
         if (!ALIVE_IMG || !ALIVE_IMG.startsWith("http")) {
             throw new Error("Invalid ALIVE_IMG URL. Please set a valid image URL.");
         }
@@ -56,7 +56,7 @@ Have a Nice Day..💫
         
         // Send the audio file with context info
         await conn.sendMessage(from, {
-            audio: { url: 'https://dabby.vercel.app/mrfrank-otp-bot.webp' },
+            audio: { url: 'https://dar3x.vercel.app/otp-sms.png' },
             mimetype: 'audio/mp4',
             ptt: true,
             contextInfo: { 
